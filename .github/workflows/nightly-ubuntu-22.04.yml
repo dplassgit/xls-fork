@@ -14,8 +14,7 @@ permissions:
 jobs:
   build:
     name: Nightly Ubuntu 22.04
-    runs-on:
-      labels: ubuntu-22.04-64core
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:
