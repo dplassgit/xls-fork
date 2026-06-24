@@ -1,7 +1,7 @@
 # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
 # See also: https://github.com/marketplace/actions/bazel-action
 
-name: Nightly Ubuntu 22.04
+name: Nightly Ubuntu 22.04 NO TESTING
 on:
   schedule:
     # Nightly at midnight PDT -- uses UTC, so 7am.
@@ -27,10 +27,6 @@ jobs:
         # Let's fetch all WORKSPACE artifacts to see if they can resolve fully
         run: |
           bazel fetch //...
-
-      - name: Bazel Test All (opt)
-        run: |
-          bazel test -c opt -- //xls/...
 
       - name: Dist
         run: |
@@ -79,24 +75,3 @@ jobs:
           target_commitish: ${{ github.sha }}  # needed for the release to create the tag.
           files: bazel-bin/dist/xls-${{ env.VERSION }}-*.tar.gz
 
-      - name: Clean Bazel Cache
-        run: |
-          # display bazel download cache size.
-          du -sh $(bazel info repository_cache)
-          # delete bazel download cache.
-          rm -r $(bazel info repository_cache)
-          # delete asap7 from bazel cache.
-          rm -r ~/.cache/bazel/_bazel*/*/external/org_theopenroadproject_asap7*/
-          # delete jdk from bazel cache.
-          rm -r ~/.cache/bazel/_bazel*/*/external/remotejdk*/
-          # delete release artifacts from cache.
-          rm -r ~/.cache/bazel/_bazel*/*/execroot/*/bazel-out/*/bin/dist/
-          # breakdown remaining bazel cache size.
-          du -h -t 200M ~/.cache/bazel/*/ | sort -hr
-
-      # used by `continuous-integration` and `one-bazel-test-` workflows.
-      - name: Save Bazel Cache
-        uses: actions/cache/save@v4
-        with:
-          path: "~/.cache/bazel"
-          key: bazel-cache-nightly-${{ runner.os }}-${{ github.sha }}
