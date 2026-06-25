@@ -69,3 +69,33 @@ jobs:
           ./interpreter_main ${GITHUB_WORKSPACE}/xls/examples/sha256.x
           ./ir_converter_main ${GITHUB_WORKSPACE}/xls/examples/sha256.x
 
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: env.TAG_EXISTS == ''
+        with:
+          tag_name: ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}  # needed for the release to create the tag.
+          files: bazel-bin/dist/xls-${{ env.VERSION }}-*.tar.gz
+
+      - name: Clean Bazel Cache
+        run: |
+          # display bazel download cache size.
+          du -sh $(bazel info repository_cache)
+          # delete bazel download cache.
+          rm -r $(bazel info repository_cache)
+          # delete asap7 from bazel cache.
+          rm -r ~/.cache/bazel/_bazel*/*/external/org_theopenroadproject_asap7*/
+          # delete jdk from bazel cache.
+          rm -r ~/.cache/bazel/_bazel*/*/external/remotejdk*/
+          # delete release artifacts from cache.
+          rm -r ~/.cache/bazel/_bazel*/*/execroot/*/bazel-out/*/bin/dist/
+          # breakdown remaining bazel cache size.
+          du -h -t 200M ~/.cache/bazel/*/ | sort -hr
+
+      # used by `continuous-integration` and `one-bazel-test-` workflows.
+      - name: Save Bazel Cache
+        uses: actions/cache/save@v4
+        with:
+          path: "~/.cache/bazel"
+          key: bazel-cache-nightly-${{ runner.os }}-${{ github.sha }}
+
